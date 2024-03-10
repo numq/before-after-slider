@@ -43,11 +43,11 @@ fun main(args: Array<String>) {
         }
 
         val orientation = remember(isHorizontal) {
-            if (isHorizontal) BeforeAfterSlider.Orientation.HORIZONTAL else BeforeAfterSlider.Orientation.VERTICAL
+            if (isHorizontal) BeforeAfterSliderOrientation.HORIZONTAL else BeforeAfterSliderOrientation.VERTICAL
         }
 
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
-            BeforeAfter(
+            BeforeAfterSlider(
                 modifier = Modifier.fillMaxSize(),
                 orientation = orientation,
                 contentBefore = {
