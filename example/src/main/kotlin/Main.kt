@@ -38,9 +38,7 @@ fun main(args: Array<String>) {
             )
         }
 
-        val (isHorizontal, setIsHorizontal) = remember {
-            mutableStateOf(true)
-        }
+        val (isHorizontal, setIsHorizontal) = remember { mutableStateOf(true) }
 
         val orientation = remember(isHorizontal) {
             if (isHorizontal) BeforeAfterSliderOrientation.HORIZONTAL else BeforeAfterSliderOrientation.VERTICAL

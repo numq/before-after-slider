@@ -11,7 +11,6 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -24,28 +23,56 @@ fun BeforeAfterSlider(
     sliderModifier: Modifier = Modifier.background(Color.White),
     sliderCircleModifier: Modifier = Modifier.background(Color.White),
     measurements: BeforeAfterSliderMeasurements = BeforeAfterSliderMeasurements(),
+    defaultPercentage: Float = .5f,
 ) {
+
+    require(defaultPercentage in (0f..1f))
+
     BoxWithConstraints(modifier = modifier.padding(measurements.sliderThickness.dp)) {
 
-        var previousMaxWidth by remember { mutableStateOf(0f) }
+        var offsetX by remember { mutableStateOf(defaultPercentage * maxWidth.value) }
 
-        var previousMaxHeight by remember { mutableStateOf(0f) }
+        var offsetY by remember { mutableStateOf(defaultPercentage * maxHeight.value) }
 
-        var offsetX by remember(orientation) { mutableStateOf(maxWidth.div(2).value) }
+        val (percentage, setPercentage) = remember {
+            mutableStateOf(defaultPercentage)
+        }
 
-        var offsetY by remember(orientation) { mutableStateOf(maxHeight.div(2).value) }
+        val sliderOffsetX by remember(orientation, percentage, maxWidth) {
+            derivedStateOf {
+                when (orientation) {
+                    BeforeAfterSliderOrientation.HORIZONTAL -> maxWidth.times(percentage).coerceIn(0.dp, maxWidth)
 
-        val sliderOffsetX = with(LocalDensity.current) { offsetX.toDp() }
+                    BeforeAfterSliderOrientation.VERTICAL -> maxWidth.div(2)
+                }
+            }
+        }
 
-        val sliderOffsetY = with(LocalDensity.current) { offsetY.toDp() }
+        val sliderOffsetY by remember(orientation, percentage, maxHeight) {
+            derivedStateOf {
+                when (orientation) {
+                    BeforeAfterSliderOrientation.HORIZONTAL -> maxHeight.div(2)
+
+                    BeforeAfterSliderOrientation.VERTICAL -> maxHeight.times(percentage).coerceIn(0.dp, maxHeight)
+                }
+            }
+        }
 
         val draggingModifier = Modifier.pointerInput(orientation, maxWidth, maxHeight) {
             detectDragGestures { change, (x, y) ->
                 change.consume()
                 when (orientation) {
-                    BeforeAfterSliderOrientation.HORIZONTAL -> offsetX = (offsetX + x).coerceIn(0f, maxWidth.value)
+                    BeforeAfterSliderOrientation.HORIZONTAL -> {
+                        offsetX = (offsetX + x).coerceIn(0f, maxWidth.value)
 
-                    BeforeAfterSliderOrientation.VERTICAL -> offsetY = (offsetY + y).coerceIn(0f, maxHeight.value)
+                        setPercentage(offsetX.div(maxWidth.value))
+                    }
+
+                    BeforeAfterSliderOrientation.VERTICAL -> {
+                        offsetY = (offsetY + y).coerceIn(0f, maxHeight.value)
+
+                        setPercentage(offsetY.div(maxHeight.value))
+                    }
                 }
             }
         }
@@ -54,15 +81,6 @@ fun BeforeAfterSlider(
             x = if (orientation == BeforeAfterSliderOrientation.HORIZONTAL) sliderOffsetX.minus(measurements.sliderPadding.dp) else 0.dp,
             y = if (orientation == BeforeAfterSliderOrientation.VERTICAL) sliderOffsetY.minus(measurements.sliderPadding.dp) else 0.dp
         )
-
-        SideEffect {
-            if (previousMaxWidth != 0f && previousMaxHeight != 0f) {
-                offsetX *= maxWidth.div(previousMaxWidth).value
-                offsetY *= maxHeight.div(previousMaxHeight).value
-            }
-            previousMaxWidth = maxWidth.value
-            previousMaxHeight = maxHeight.value
-        }
 
         Box(
             modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
@@ -98,6 +116,7 @@ fun BeforeAfterSlider(
             modifier = Modifier.composed {
                 when (orientation) {
                     BeforeAfterSliderOrientation.HORIZONTAL -> requiredWidth(measurements.sliderThickness.dp).fillMaxHeight()
+
                     BeforeAfterSliderOrientation.VERTICAL -> requiredHeight(measurements.sliderThickness.dp).fillMaxWidth()
                 }
             }.then(sliderOffsetModifier).then(draggingModifier).then(sliderModifier)
