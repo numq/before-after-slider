@@ -26,7 +26,6 @@ publishing {
     publications {
         register("mavenJava", MavenPublication::class) {
             from(components["java"])
-            artifactId = "library"
         }
     }
 }
